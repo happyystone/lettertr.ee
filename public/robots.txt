@@ -1,0 +1,78 @@
+# Lettertree Robots.txt
+# https://lettertr.ee
+# Landing Page Only - Beta Launch
+
+# Allow all bots to crawl the landing page
+User-agent: *
+Allow: /
+
+# Block all non-essential pages during beta
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /api/
+Disallow: /admin/
+Disallow: /billing
+Disallow: /integrations
+
+# Allow essential pages only
+Allow: /terms
+Allow: /privacy
+Allow: /sitemap.xml
+
+# Block query parameters and dynamic content
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*&page=
+Disallow: /*?utm_*
+Noindex: /search?q=
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://lettertr.ee/sitemap.xml
+
+# Google specific - allow faster crawling for main page
+User-agent: Googlebot
+Allow: /
+Allow: /terms
+Allow: /privacy
+Disallow: /dashboard
+Crawl-delay: 0
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Allow: /terms  
+Allow: /privacy
+Disallow: /dashboard
+Crawl-delay: 1
+
+# Block SEO tools and bad bots
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Block social media crawlers for non-public pages
+User-agent: facebookexternalhit
+Allow: /
+Allow: /terms
+Allow: /privacy
+Disallow: /dashboard
+
+User-agent: Twitterbot
+Allow: /
+Allow: /terms
+Allow: /privacy
+Disallow: /dashboard

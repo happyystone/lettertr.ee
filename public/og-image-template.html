@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200, height=630" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .container {
+        width: 100%;
+        padding: 80px;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+      }
+      .logo {
+        font-size: 48px;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 30px;
+        letter-spacing: -1px;
+      }
+      .title {
+        font-size: 72px;
+        font-weight: 900;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 40px;
+        text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .description {
+        font-size: 32px;
+        color: rgba(255, 255, 255, 0.95);
+        line-height: 1.4;
+        font-weight: 500;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .pattern {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0.1;
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 35px,
+          rgba(255, 255, 255, 0.5) 35px,
+          rgba(255, 255, 255, 0.5) 70px
+        );
+      }
+      .badge {
+        position: absolute;
+        top: 60px;
+        right: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 12px 24px;
+        border-radius: 50px;
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pattern"></div>
+    <div class="badge">뉴스레터 큐레이션</div>
+    <div class="container">
+      <div class="logo">📬 Lettertree</div>
+      <h1 class="title">당신의 뉴스레터 정원</h1>
+      <p class="description">
+        수백 개의 뉴스레터를 한 곳에서 발견하고,<br />
+        구독하고, 읽어보세요.
+      </p>
+    </div>
+  </body>
+</html>

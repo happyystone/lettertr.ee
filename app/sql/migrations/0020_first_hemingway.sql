@@ -1,0 +1,1 @@
+ALTER TABLE "newsletter_sources" ALTER COLUMN "update_count" SET DEFAULT 0;

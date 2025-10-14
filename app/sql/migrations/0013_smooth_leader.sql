@@ -1,0 +1,1 @@
+DROP INDEX "newsletters_hash_unique";
