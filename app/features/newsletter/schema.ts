@@ -1,326 +1,208 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  jsonb,
-  index,
-  uniqueIndex,
-  varchar,
-  pgPolicy,
-} from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
-import { authenticatedRole, anonRole } from 'drizzle-orm/supabase';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
 import { users } from '../auth/schema';
 
 // Newsletter sources (e.g., TechCrunch, BBC News) - 발신자 정보
-export const newsletterSources = pgTable('newsletter_sources', {
+export const newsletterSources = sqliteTable('newsletter_sources', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  email: varchar('email', { length: 255 }).notNull().unique(), // 발신자 이메일
-  name: varchar('name', { length: 255 }).notNull(),
-  domain: varchar('domain', { length: 255 }), // 도메인 (예: techcrunch.com)
+  email: text('email').notNull().unique(), // 발신자 이메일
+  name: text('name').notNull(),
+  domain: text('domain'), // 도메인 (예: techcrunch.com)
   description: text('description'),
-  category: varchar('category', { length: 100 }), // NEWS, AI, BUSINESS, TECH, etc.
+  category: text('category'), // NEWS, AI, BUSINESS, TECH, etc.
   logoUrl: text('logo_url'),
   website: text('website'),
   subscribeUrl: text('subscribe_url'),
 
   // Discovery features
-  isVerified: boolean('is_verified').default(false).notNull(), // 검증된 발신자
-  isFeatured: boolean('is_featured').default(false).notNull(), // 추천 뉴스레터
+  isVerified: integer('is_verified', { mode: 'boolean' }).default(false).notNull(), // 검증된 발신자
+  isFeatured: integer('is_featured', { mode: 'boolean' }).default(false).notNull(), // 추천 뉴스레터
   subscriberCount: integer('subscriber_count').default(0),
 
-  isActive: boolean('is_active').default(true).notNull(),
-  region: varchar('region', { length: 10 }).default('ROW').notNull(), // KR, ROW (Rest of World)
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+  region: text('region').default('ROW').notNull(), // KR, ROW (Rest of World)
 
   // 통계
   totalNewsletters: integer('total_newsletters').default(0),
-  lastNewsletterAt: timestamp('last_newsletter_at'),
+  lastNewsletterAt: integer('last_newsletter_at', { mode: 'timestamp' }),
 
-  createdAt: timestamp('created_at')
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .$defaultFn(() => new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
     .$defaultFn(() => new Date())
     .notNull(),
   updateCount: integer('update_count').default(0).notNull(),
 });
 
 // Individual newsletter emails received via ForwardEmail
-export const newsletters = pgTable(
-  'newsletters',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    sourceId: text('source_id')
-      .notNull()
-      .references(() => newsletterSources.id, { onDelete: 'cascade' }), // 발신자 필수
+export const newsletters = sqliteTable('newsletters', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  sourceId: text('source_id')
+    .notNull()
+    .references(() => newsletterSources.id, { onDelete: 'cascade' }), // 발신자 필수
 
-    newsletterHash: text('newsletter_hash').notNull().unique(), // 뉴스레터 고유 ID (중복 방지용)
+  newsletterHash: text('newsletter_hash').notNull().unique(), // 뉴스레터 고유 ID (중복 방지용)
 
-    // Email metadata
-    messageId: text('message_id').notNull(),
-    subject: text('subject').notNull(), // 이메일 제목
-    senderEmail: varchar('sender_email', { length: 255 }).notNull(),
-    senderName: varchar('sender_name', { length: 255 }),
+  // Email metadata
+  messageId: text('message_id').notNull(),
+  subject: text('subject').notNull(), // 이메일 제목
+  senderEmail: text('sender_email').notNull(),
+  senderName: text('sender_name'),
 
-    // Content
-    htmlContent: text('html_content'), // 원본 HTML
-    textContent: text('text_content'), // 플레인 텍스트
-    extractedContent: text('extracted_content'), // 정제된 콘텐츠
-    excerpt: text('excerpt'), // 요약/미리보기
-    summary: text('summary'), // AI 생성 요약 (future)
+  // Content
+  htmlContent: text('html_content'), // 원본 HTML
+  textContent: text('text_content'), // 플레인 텍스트
+  extractedContent: text('extracted_content'), // 정제된 콘텐츠
+  excerpt: text('excerpt'), // 요약/미리보기
+  summary: text('summary'), // AI 생성 요약 (future)
 
-    // Extracted metadata
-    thumbnailUrl: text('thumbnail_url'),
-    originalUrl: text('original_url'), // 뉴스레터 내 원본 링크
-    readTimeMinutes: integer('read_time_minutes').default(5),
+  // Extracted metadata
+  thumbnailUrl: text('thumbnail_url'),
+  originalUrl: text('original_url'), // 뉴스레터 내 원본 링크
+  readTimeMinutes: integer('read_time_minutes').default(5),
 
-    // Email headers and attachments
-    headers: jsonb('headers').$type<Record<string, string>>().default({}),
-    attachments: jsonb('attachments')
-      .$type<
-        Array<{
-          filename: string;
-          contentType: string;
-          size: number;
-          url?: string;
-        }>
-      >()
-      .default([]),
+  // Email headers and attachments
+  headers: text('headers', { mode: 'json' }).$type<Record<string, string>>().default({}),
+  attachments: text('attachments', { mode: 'json' })
+    .$type<
+      Array<{
+        filename: string;
+        contentType: string;
+        size: number;
+        url?: string;
+      }>
+    >()
+    .default([]),
 
-    // Organization
-    tags: jsonb('tags').$type<string[]>().default([]),
-    category: varchar('category', { length: 100 }), // auto-categorized
+  // Organization
+  tags: text('tags', { mode: 'json' }).$type<string[]>().default([]),
+  category: text('category'), // auto-categorized
 
-    // Status
-    isActive: boolean('is_active').default(true).notNull(),
+  // Status
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
 
-    // Timestamps
-    receivedAt: timestamp('received_at').notNull(), // 이메일 수신 시간
-    createdAt: timestamp('created_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-    updatedAt: timestamp('updated_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('newsletters_source_id_idx').on(table.sourceId),
-    index('newsletters_received_at_idx').on(table.receivedAt),
-    // RLS Policy: Users can only see newsletters from sources they subscribe to
-    pgPolicy('newsletters_subscription_policy', {
-      as: 'permissive',
-      for: 'select',
-      to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM ${userNewsletterSources}
-        WHERE ${userNewsletterSources.sourceId} = source_id
-        AND ${userNewsletterSources.userId} = current_setting('app.current_user_id')::text
-        AND ${userNewsletterSources.isSubscribed} = true
-      )`,
-    }),
-    // Anonymous/webhook can insert newsletters (for email processing)
-    pgPolicy('newsletters_insert_policy', {
-      as: 'permissive',
-      for: 'insert',
-      to: anonRole,
-      withCheck: sql`source_id IS NOT NULL`,
-    }),
-  ],
-);
+  // Timestamps
+  receivedAt: integer('received_at', { mode: 'timestamp' }).notNull(), // 이메일 수신 시간
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // User-specific newsletter interactions
-export const userNewsletters = pgTable(
-  'user_newsletters',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    newsletterId: text('newsletter_id')
-      .notNull()
-      .references(() => newsletters.id, { onDelete: 'cascade' }),
-    isRead: boolean('is_read').default(false).notNull(),
-    isBookmarked: boolean('is_bookmarked').default(false).notNull(),
-    isArchived: boolean('is_archived').default(false).notNull(),
-    readAt: timestamp('read_at'),
-    bookmarkedAt: timestamp('bookmarked_at'),
-    archivedAt: timestamp('archived_at'),
-    createdAt: timestamp('created_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('user_newsletters_user_id_idx').on(table.userId),
-    uniqueIndex('user_newsletters_user_newsletter_unique').on(table.userId, table.newsletterId),
-    // RLS Policy: Users can only access their own newsletter interactions
-    pgPolicy('user_newsletters_policy', {
-      as: 'permissive',
-      for: 'all',
-      to: authenticatedRole,
-      using: sql`user_id = current_setting('app.current_user_id')::text`,
-      withCheck: sql`user_id = current_setting('app.current_user_id')::text`,
-    }),
-  ],
-);
+export const userNewsletters = sqliteTable('user_newsletters', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  newsletterId: text('newsletter_id')
+    .notNull()
+    .references(() => newsletters.id, { onDelete: 'cascade' }),
+  isRead: integer('is_read', { mode: 'boolean' }).default(false).notNull(),
+  isBookmarked: integer('is_bookmarked', { mode: 'boolean' }).default(false).notNull(),
+  isArchived: integer('is_archived', { mode: 'boolean' }).default(false).notNull(),
+  readAt: integer('read_at', { mode: 'timestamp' }),
+  bookmarkedAt: integer('bookmarked_at', { mode: 'timestamp' }),
+  archivedAt: integer('archived_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // User newsletter source subscriptions
-export const userNewsletterSources = pgTable(
-  'user_newsletter_sources',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    sourceId: text('source_id')
-      .notNull()
-      .references(() => newsletterSources.id, { onDelete: 'cascade' }),
-    isSubscribed: boolean('is_subscribed').default(true).notNull(),
-    isActive: boolean('is_active').default(true).notNull(),
-    isPaused: boolean('is_paused').default(false).notNull(),
-    subscriptionEmail: varchar('subscription_email', { length: 255 }),
-    preferences: jsonb('preferences').$type<{
-      frequency?: 'instant' | 'daily' | 'weekly';
-      categories?: string[];
-    }>(),
-    subscribedAt: timestamp('subscribed_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-    unsubscribedAt: timestamp('unsubscribed_at'),
-    updatedAt: timestamp('updated_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('user_newsletter_sources_source_id_idx').on(table.sourceId),
-    index('user_newsletter_sources_user_source_idx').on(table.userId, table.sourceId),
-    // RLS Policy: Users can only manage their own subscriptions
-    pgPolicy('user_newsletter_sources_policy', {
-      as: 'permissive',
-      for: 'all',
-      to: authenticatedRole,
-      using: sql`user_id = current_setting('app.current_user_id')::text`,
-      withCheck: sql`user_id = current_setting('app.current_user_id')::text`,
-    }),
-  ],
-);
+export const userNewsletterSources = sqliteTable('user_newsletter_sources', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  sourceId: text('source_id')
+    .notNull()
+    .references(() => newsletterSources.id, { onDelete: 'cascade' }),
+  isSubscribed: integer('is_subscribed', { mode: 'boolean' }).default(true).notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+  isPaused: integer('is_paused', { mode: 'boolean' }).default(false).notNull(),
+  subscriptionEmail: text('subscription_email'),
+  preferences: text('preferences', { mode: 'json' }).$type<{
+    frequency?: 'instant' | 'daily' | 'weekly';
+    categories?: string[];
+  }>(),
+  subscribedAt: integer('subscribed_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // Alias for backward compatibility
 export const userSubscriptions = userNewsletterSources;
 
 // User-created folders for organization
-export const userFolders = pgTable(
-  'user_folders',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    name: varchar('name', { length: 100 }).notNull(),
-    description: text('description'),
-    color: varchar('color', { length: 20 }).default('#6366f1'), // Hex color code
-    sortOrder: integer('sort_order').default(0),
-    createdAt: timestamp('created_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('user_folders_user_id_idx').on(table.userId),
-    // RLS Policy: Users can only manage their own folders
-    pgPolicy('user_folders_policy', {
-      as: 'permissive',
-      for: 'all',
-      to: authenticatedRole,
-      using: sql`user_id = current_setting('app.current_user_id')::text`,
-      withCheck: sql`user_id = current_setting('app.current_user_id')::text`,
-    }),
-  ],
-);
+export const userFolders = sqliteTable('user_folders', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  color: text('color').default('#6366f1'), // Hex color code
+  sortOrder: integer('sort_order').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // Newsletter-to-folder assignments
-export const newsletterFolders = pgTable(
-  'newsletter_folders',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userNewsletterId: text('user_newsletter_id')
-      .notNull()
-      .references(() => userNewsletters.id, { onDelete: 'cascade' }),
-    folderId: text('folder_id')
-      .notNull()
-      .references(() => userFolders.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('newsletter_folders_user_newsletter_idx').on(table.userNewsletterId),
-    // RLS Policy: Users can only manage newsletter-folder associations for their own newsletters
-    pgPolicy('newsletter_folders_policy', {
-      as: 'permissive',
-      for: 'all',
-      to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM user_newsletters un
-        WHERE un.id = user_newsletter_id
-        AND un.user_id = current_setting('app.current_user_id')::text
-      )`,
-      withCheck: sql`EXISTS (
-        SELECT 1 FROM user_newsletters un
-        WHERE un.id = user_newsletter_id
-        AND un.user_id = current_setting('app.current_user_id')::text
-      )`,
-    }),
-  ],
-);
+export const newsletterFolders = sqliteTable('newsletter_folders', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userNewsletterId: text('user_newsletter_id')
+    .notNull()
+    .references(() => userNewsletters.id, { onDelete: 'cascade' }),
+  folderId: text('folder_id')
+    .notNull()
+    .references(() => userFolders.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // User preferences for feed personalization
-export const userPreferences = pgTable(
-  'user_preferences',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' })
-      .unique(),
-    region: varchar('region', { length: 10 }).default('ROW').notNull(), // KR, ROW
-    preferredCategories: jsonb('preferred_categories').$type<string[]>().default([]),
-    readingSpeedWpm: integer('reading_speed_wpm').default(200), // Words per minute for read time calculation
-    emailFrequency: varchar('email_frequency', { length: 20 }).default('instant'), // instant, daily, weekly
-    settings: jsonb('settings').$type<Record<string, any>>().default({}), // UI preferences, etc.
-    createdAt: timestamp('created_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-    updatedAt: timestamp('updated_at')
-      .$defaultFn(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('user_preferences_user_id_idx').on(table.userId),
-    // RLS Policy: Users can only manage their own preferences
-    pgPolicy('user_preferences_policy', {
-      as: 'permissive',
-      for: 'all',
-      to: authenticatedRole,
-      using: sql`user_id = current_setting('app.current_user_id')::text`,
-      withCheck: sql`user_id = current_setting('app.current_user_id')::text`,
-    }),
-  ],
-);
+export const userPreferences = sqliteTable('user_preferences', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  region: text('region').default('ROW').notNull(), // KR, ROW
+  preferredCategories: text('preferred_categories', { mode: 'json' }).$type<string[]>().default([]),
+  readingSpeedWpm: integer('reading_speed_wpm').default(200), // Words per minute for read time calculation
+  emailFrequency: text('email_frequency').default('instant'), // instant, daily, weekly
+  settings: text('settings', { mode: 'json' }).$type<Record<string, any>>().default({}), // UI preferences, etc.
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
 
 // Relations
 export const newsletterSourcesRelations = relations(newsletterSources, ({ many }) => ({

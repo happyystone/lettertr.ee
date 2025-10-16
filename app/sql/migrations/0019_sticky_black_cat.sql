@@ -1,1 +1,0 @@
-ALTER TABLE "newsletter_sources" ADD COLUMN "update_count" integer DEFAULT 1 NOT NULL;

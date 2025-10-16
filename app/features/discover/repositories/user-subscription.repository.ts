@@ -43,20 +43,18 @@ export class UserSubscriptionRepository {
    */
   static async create(request: Request, data: CreateSubscriptionData) {
     return executeWithAuth(request, async (db, user) => {
-      const [subscription] = await db((tx) =>
-        tx
-          .insert(userSubscriptions)
-          .values({
-            userId: user.id,
-            sourceId: data.sourceId,
-            subscriptionEmail: data.subscriptionEmail,
-            preferences: data.preferences || null,
-            isActive: true,
-            isPaused: false,
-            subscribedAt: new Date(),
-          })
-          .returning(),
-      );
+      const [subscription] = await db
+        .insert(userSubscriptions)
+        .values({
+          userId: user.id,
+          sourceId: data.sourceId,
+          subscriptionEmail: data.subscriptionEmail,
+          preferences: data.preferences || null,
+          isActive: true,
+          isPaused: false,
+          subscribedAt: new Date(),
+        })
+        .returning();
 
       return subscription;
     });
@@ -67,15 +65,11 @@ export class UserSubscriptionRepository {
    */
   static async findOne(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const subscription = await db((tx) =>
-        tx
-          .select()
-          .from(userSubscriptions)
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .limit(1),
-      );
+      const subscription = await db
+        .select()
+        .from(userSubscriptions)
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .limit(1);
 
       return subscription[0] || null;
     });
@@ -126,27 +120,23 @@ export class UserSubscriptionRepository {
       }
 
       // 구독 정보와 뉴스레터 소스 정보 JOIN
-      const subscriptions = await db((tx) =>
-        tx
-          .select({
-            subscription: userSubscriptions,
-            source: newsletterSources,
-          })
-          .from(userSubscriptions)
-          .innerJoin(newsletterSources, eq(userSubscriptions.sourceId, newsletterSources.id))
-          .where(and(...whereConditions))
-          .orderBy(orderByClause)
-          .limit(limit)
-          .offset(offset),
-      );
+      const subscriptions = await db
+        .select({
+          subscription: userSubscriptions,
+          source: newsletterSources,
+        })
+        .from(userSubscriptions)
+        .innerJoin(newsletterSources, eq(userSubscriptions.sourceId, newsletterSources.id))
+        .where(and(...whereConditions))
+        .orderBy(orderByClause)
+        .limit(limit)
+        .offset(offset);
 
       // 전체 개수 조회
-      const [{ count }] = await db((tx) =>
-        tx
-          .select({ count: sql<number>`count(*)::int` })
-          .from(userSubscriptions)
-          .where(and(...whereConditions)),
-      );
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(userSubscriptions)
+        .where(and(...whereConditions));
 
       return {
         data: subscriptions,
@@ -165,18 +155,14 @@ export class UserSubscriptionRepository {
    */
   static async update(request: Request, sourceId: string, data: UpdateSubscriptionData) {
     return executeWithAuth(request, async (db, user) => {
-      const [updated] = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            ...data,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const [updated] = await db
+        .update(userSubscriptions)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return updated;
     });
@@ -187,19 +173,15 @@ export class UserSubscriptionRepository {
    */
   static async cancel(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const [canceled] = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            isActive: false,
-            unsubscribedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const [canceled] = await db
+        .update(userSubscriptions)
+        .set({
+          isActive: false,
+          unsubscribedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return canceled;
     });
@@ -210,20 +192,16 @@ export class UserSubscriptionRepository {
    */
   static async reactivate(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const [reactivated] = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            isActive: true,
-            isPaused: false,
-            unsubscribedAt: null,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const [reactivated] = await db
+        .update(userSubscriptions)
+        .set({
+          isActive: true,
+          isPaused: false,
+          unsubscribedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return reactivated;
     });
@@ -234,18 +212,14 @@ export class UserSubscriptionRepository {
    */
   static async pause(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const [paused] = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            isPaused: true,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const [paused] = await db
+        .update(userSubscriptions)
+        .set({
+          isPaused: true,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return paused;
     });
@@ -256,18 +230,14 @@ export class UserSubscriptionRepository {
    */
   static async resume(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const [resumed] = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            isPaused: false,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const [resumed] = await db
+        .update(userSubscriptions)
+        .set({
+          isPaused: false,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return resumed;
     });
@@ -278,14 +248,10 @@ export class UserSubscriptionRepository {
    */
   static async delete(request: Request, sourceId: string) {
     return executeWithAuth(request, async (db, user) => {
-      const deleted = await db((tx) =>
-        tx
-          .delete(userSubscriptions)
-          .where(
-            and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)),
-          )
-          .returning(),
-      );
+      const deleted = await db
+        .delete(userSubscriptions)
+        .where(and(eq(userSubscriptions.userId, user.id), eq(userSubscriptions.sourceId, sourceId)))
+        .returning();
 
       return deleted[0] || null;
     });
@@ -296,22 +262,20 @@ export class UserSubscriptionRepository {
    */
   static async bulkCreate(request: Request, sourceIds: string[]) {
     return executeWithAuth(request, async (db, user) => {
-      const subscriptions = await db((tx) =>
-        tx
-          .insert(userSubscriptions)
-          .values(
-            sourceIds.map((sourceId) => ({
-              userId: user.id,
-              sourceId,
-              isActive: true,
-              isPaused: false,
-              subscribedAt: new Date(),
-              preferences: {},
-            })),
-          )
-          .onConflictDoNothing()
-          .returning(),
-      );
+      const subscriptions = await db
+        .insert(userSubscriptions)
+        .values(
+          sourceIds.map((sourceId) => ({
+            userId: user.id,
+            sourceId,
+            isActive: true,
+            isPaused: false,
+            subscribedAt: new Date(),
+            preferences: {},
+          })),
+        )
+        .onConflictDoNothing()
+        .returning();
 
       return subscriptions;
     });
@@ -322,22 +286,20 @@ export class UserSubscriptionRepository {
    */
   static async bulkCancel(request: Request, sourceIds: string[]) {
     return executeWithAuth(request, async (db, user) => {
-      const canceled = await db((tx) =>
-        tx
-          .update(userSubscriptions)
-          .set({
-            isActive: false,
-            unsubscribedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(userSubscriptions.userId, user.id),
-              sql`${userSubscriptions.sourceId} = ANY(${sourceIds})`,
-            ),
-          )
-          .returning(),
-      );
+      const canceled = await db
+        .update(userSubscriptions)
+        .set({
+          isActive: false,
+          unsubscribedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(userSubscriptions.userId, user.id),
+            sql`${userSubscriptions.sourceId} = ANY(${sourceIds})`,
+          ),
+        )
+        .returning();
 
       return canceled;
     });
@@ -348,17 +310,15 @@ export class UserSubscriptionRepository {
    */
   static async getUserStats(request: Request) {
     return executeWithAuth(request, async (db, user) => {
-      const stats = await db((tx) =>
-        tx
-          .select({
-            total: sql<number>`count(*)::int`,
-            active: sql<number>`count(*) filter (where ${userSubscriptions.isActive} = true)::int`,
-            paused: sql<number>`count(*) filter (where ${userSubscriptions.isPaused} = true)::int`,
-            canceled: sql<number>`count(*) filter (where ${userSubscriptions.isActive} = false)::int`,
-          })
-          .from(userSubscriptions)
-          .where(eq(userSubscriptions.userId, user.id)),
-      );
+      const stats = await db
+        .select({
+          total: sql<number>`count(*)::int`,
+          active: sql<number>`count(*) filter (where ${userSubscriptions.isActive} = true)::int`,
+          paused: sql<number>`count(*) filter (where ${userSubscriptions.isPaused} = true)::int`,
+          canceled: sql<number>`count(*) filter (where ${userSubscriptions.isActive} = false)::int`,
+        })
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.userId, user.id));
 
       return (
         stats[0] || {
@@ -447,22 +407,20 @@ export class UserSubscriptionRepository {
    */
   static async getUserSubscriptions(request: Request) {
     return executeWithAuth(request, async (db, user) => {
-      const results = await db((tx) =>
-        tx
-          .select({
-            subscription: userSubscriptions,
-            source: newsletterSources,
-          })
-          .from(userSubscriptions)
-          .innerJoin(newsletterSources, eq(userSubscriptions.sourceId, newsletterSources.id))
-          .where(
-            and(
-              eq(userSubscriptions.userId, user.id),
-              eq(userSubscriptions.isSubscribed, true),
-              eq(userSubscriptions.isActive, true),
-            ),
+      const results = await db
+        .select({
+          subscription: userSubscriptions,
+          source: newsletterSources,
+        })
+        .from(userSubscriptions)
+        .innerJoin(newsletterSources, eq(userSubscriptions.sourceId, newsletterSources.id))
+        .where(
+          and(
+            eq(userSubscriptions.userId, user.id),
+            eq(userSubscriptions.isSubscribed, true),
+            eq(userSubscriptions.isActive, true),
           ),
-      );
+        );
 
       return results.map((r) => ({
         id: r.source.id,

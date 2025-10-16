@@ -1,1 +1,0 @@
-ALTER TABLE "newsletter_sources" ADD COLUMN "subscribe_url" text;

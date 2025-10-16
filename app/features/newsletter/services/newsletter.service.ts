@@ -9,7 +9,7 @@ export class NewsletterService {
   static async getUserFeed(request: Request, filters: FeedFilters) {
     try {
       const newsletters = await NewsletterRepository.getFeed(request, filters);
-      const stats = await NewsletterRepository.getStats(request);
+      const stats = await NewsletterRepository.getStats(request, filters);
 
       return {
         newsletters,
@@ -96,9 +96,9 @@ export class NewsletterService {
   /**
    * 사용자의 뉴스레터 통계를 가져옵니다
    */
-  static async getUserStats(request: Request): Promise<NewsletterStats> {
+  static async getUserStats(request: Request, filters: FeedFilters): Promise<NewsletterStats> {
     try {
-      return await NewsletterRepository.getStats(request);
+      return await NewsletterRepository.getStats(request, filters);
     } catch (error) {
       console.error('Failed to fetch user stats:', error);
       throw new Error('통계를 불러오는데 실패했습니다');

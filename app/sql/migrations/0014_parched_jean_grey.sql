@@ -1,1 +1,0 @@
-ALTER TABLE "newsletters" DROP CONSTRAINT "newsletters_message_id_unique";

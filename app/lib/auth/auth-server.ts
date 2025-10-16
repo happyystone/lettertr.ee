@@ -8,6 +8,7 @@ import { localization } from 'better-auth-localization';
 
 import { db } from '@/db';
 import * as schema from '@/features/auth/schema';
+import { site } from '@/config/site';
 import { sendEmail } from '@/lib/email/send';
 // import { type Plan, plans } from '@/lib/payments/plans';
 
@@ -29,10 +30,11 @@ async function generateUniqueLettertreeEmail(userName: string): Promise<string> 
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'pg',
-    usePlural: true,
+    provider: 'sqlite',
+    // usePlural: true,
     schema,
   }),
+  baseURL: site.url,
   user: {
     changeEmail: {
       enabled: false, // Disable email change to preserve lettertree email

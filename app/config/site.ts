@@ -1,4 +1,6 @@
-const site_url = import.meta.env.VITE_PUBLIC_APP_URL || 'http://localhost:5173';
+import { env } from 'cloudflare:workers';
+
+const site_url = env.VITE_PUBLIC_APP_URL || 'http://localhost:5173';
 
 export const site = {
   name: 'Lettertree',
@@ -13,7 +15,7 @@ export const site = {
   darkLogo: '/bluelogoindarkmode.svg', //'/bluelogoindarkmode.svg',
   appleTouchIcon: `${site_url}/apple-touch-icon.png`,
   mailSupport: 'support@lettertr.ee', // Support email address
-  mailFrom: import.meta.env.VITE_MAIL_FROM || 'noreply@lettertr.ee', // Transactional email address
+  mailFrom: import.meta.env.MAIL_FROM || 'noreply@lettertr.ee', // Transactional email address
   links: {
     twitter: 'https://twitter.com/lettertree',
     github: 'https://github.com/lettertree',

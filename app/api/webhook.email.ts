@@ -2,7 +2,7 @@ import { type ActionFunctionArgs, data } from 'react-router';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 import { GoogleGenAI } from '@google/genai';
 
 import { db } from '@/db';
@@ -155,7 +155,7 @@ async function processCloudflareEmail(parsedData: z.infer<typeof cloudflareEmail
     }
 
     // Parse email content
-    const sanitizedHtml = DOMPurify.sanitize(parsedData.bodyHtml || '');
+    const sanitizedHtml = sanitizeHtml(parsedData.bodyHtml || '');
     const parsedEmail = await parseEmail(
       sanitizedHtml,
       parsedData.bodyText,

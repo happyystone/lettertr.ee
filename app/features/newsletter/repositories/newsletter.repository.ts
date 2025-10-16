@@ -1,4 +1,4 @@
-import { and, eq, desc, asc, ilike, or, sql, inArray, isNull } from 'drizzle-orm';
+import { and, eq, desc, asc, ilike, or, sql, isNull } from 'drizzle-orm';
 
 import { executeWithAuth } from '@/lib/db/authenticated-db';
 import { auth } from '@/lib/auth/auth-server';
@@ -74,29 +74,27 @@ export class NewsletterRepository {
       }
 
       // ✅ 메인 쿼리 (한 방에 다 가져오기)
-      const results = await db((tx) =>
-        tx
-          .select({
-            newsletter: newsletters,
-            source: newsletterSources,
-            interaction: userNewsletters,
-          })
-          .from(newsletters)
-          // 내 interaction 조인 (없을 수도 있으니 LEFT JOIN)
-          .innerJoin(
-            // ✅ leftJoin → innerJoin
-            userNewsletters,
-            and(
-              eq(userNewsletters.newsletterId, newsletters.id),
-              eq(userNewsletters.userId, user.id),
-            ),
-          )
-          .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
-          .where(and(...whereConditions))
-          .orderBy(orderByClause)
-          .limit(limit)
-          .offset((page - 1) * limit),
-      );
+      const results = await db
+        .select({
+          newsletter: newsletters,
+          source: newsletterSources,
+          interaction: userNewsletters,
+        })
+        .from(newsletters)
+        // 내 interaction 조인 (없을 수도 있으니 LEFT JOIN)
+        .innerJoin(
+          // ✅ leftJoin → innerJoin
+          userNewsletters,
+          and(
+            eq(userNewsletters.newsletterId, newsletters.id),
+            eq(userNewsletters.userId, user.id),
+          ),
+        )
+        .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
+        .where(and(...whereConditions))
+        .orderBy(orderByClause)
+        .limit(limit)
+        .offset((page - 1) * limit);
 
       // ✅ Transform results
       const newsletterList: Newsletter[] = results.map((row) => {
@@ -154,29 +152,25 @@ export class NewsletterRepository {
   // Get single newsletter with details
   static async getNewsletter(request: Request, newsletterId: string) {
     return executeWithAuth(request, async (db) => {
-      const result = await db((tx) =>
-        tx
-          .select({
-            newsletter: newsletters,
-            source: newsletterSources,
-          })
-          .from(newsletters)
-          .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
-          .where(eq(newsletters.id, newsletterId)) // RLS handles user filtering
-          .limit(1),
-      );
+      const result = await db
+        .select({
+          newsletter: newsletters,
+          source: newsletterSources,
+        })
+        .from(newsletters)
+        .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
+        .where(eq(newsletters.id, newsletterId)) // RLS handles user filtering
+        .limit(1);
 
       if (!result[0]) return null;
 
       // Get user interaction
       // Note: RLS automatically filters to current user's interactions
-      const interaction = await db((tx) =>
-        tx
-          .select()
-          .from(userNewsletters)
-          .where(eq(userNewsletters.newsletterId, newsletterId))
-          .limit(1),
-      );
+      const interaction = await db
+        .select()
+        .from(userNewsletters)
+        .where(eq(userNewsletters.newsletterId, newsletterId))
+        .limit(1);
 
       const row = result[0];
       return {
@@ -232,32 +226,28 @@ export class NewsletterRepository {
       if (!current) return { previous: null, next: null };
 
       // Get previous newsletter
-      const previous = await db((tx) =>
-        tx
-          .select({
-            newsletter: newsletters,
-            source: newsletterSources,
-          })
-          .from(newsletters)
-          .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
-          .where(sql`${newsletters.receivedAt} < ${current.receivedAt}`) // RLS handles user filtering
-          .orderBy(desc(newsletters.receivedAt))
-          .limit(1),
-      );
+      const previous = await db
+        .select({
+          newsletter: newsletters,
+          source: newsletterSources,
+        })
+        .from(newsletters)
+        .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
+        .where(sql`${newsletters.receivedAt} < ${current.receivedAt}`) // RLS handles user filtering
+        .orderBy(desc(newsletters.receivedAt))
+        .limit(1);
 
       // Get next newsletter
-      const next = await db((tx) =>
-        tx
-          .select({
-            newsletter: newsletters,
-            source: newsletterSources,
-          })
-          .from(newsletters)
-          .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
-          .where(sql`${newsletters.receivedAt} > ${current.receivedAt}`) // RLS handles user filtering
-          .orderBy(asc(newsletters.receivedAt))
-          .limit(1),
-      );
+      const next = await db
+        .select({
+          newsletter: newsletters,
+          source: newsletterSources,
+        })
+        .from(newsletters)
+        .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
+        .where(sql`${newsletters.receivedAt} > ${current.receivedAt}`) // RLS handles user filtering
+        .orderBy(asc(newsletters.receivedAt))
+        .limit(1);
 
       return {
         previous: previous[0]
@@ -289,29 +279,29 @@ export class NewsletterRepository {
       if (!session?.user?.id) throw new Error('Unauthorized');
 
       // Check if newsletter exists and user has access (via RLS)
-      const newsletter = await db((tx) =>
-        tx.select().from(newsletters).where(eq(newsletters.id, newsletterId)).limit(1),
-      );
+      const newsletter = await db
+        .select()
+        .from(newsletters)
+        .where(eq(newsletters.id, newsletterId))
+        .limit(1);
 
       if (!newsletter[0]) return false;
 
-      await db((tx) =>
-        tx
-          .insert(userNewsletters)
-          .values({
-            userId: session.user.id,
-            newsletterId,
+      await db
+        .insert(userNewsletters)
+        .values({
+          userId: session.user.id,
+          newsletterId,
+          isRead,
+          readAt: isRead ? new Date() : null,
+        })
+        .onConflictDoUpdate({
+          target: [userNewsletters.userId, userNewsletters.newsletterId],
+          set: {
             isRead,
             readAt: isRead ? new Date() : null,
-          })
-          .onConflictDoUpdate({
-            target: [userNewsletters.userId, userNewsletters.newsletterId],
-            set: {
-              isRead,
-              readAt: isRead ? new Date() : null,
-            },
-          }),
-      );
+          },
+        });
 
       return true;
     });
@@ -321,36 +311,36 @@ export class NewsletterRepository {
   static async toggleBookmark(request: Request, newsletterId: string) {
     return executeWithAuth(request, async (db, user) => {
       // Check if newsletter exists and user has access (via RLS)
-      const newsletter = await db((tx) =>
-        tx.select().from(newsletters).where(eq(newsletters.id, newsletterId)).limit(1),
-      );
+      const newsletter = await db
+        .select()
+        .from(newsletters)
+        .where(eq(newsletters.id, newsletterId))
+        .limit(1);
 
       if (!newsletter[0]) return false;
 
-      const existing = await db(
-        (tx) =>
-          tx.select().from(userNewsletters).where(eq(userNewsletters.newsletterId, newsletterId)), // RLS handles user filtering
-      );
+      const existing = await db
+        .select()
+        .from(userNewsletters)
+        .where(eq(userNewsletters.newsletterId, newsletterId)); // RLS handles user filtering
 
       const newValue = !existing[0]?.isBookmarked;
 
-      await db((tx) =>
-        tx
-          .insert(userNewsletters)
-          .values({
-            userId: user.id,
-            newsletterId,
+      await db
+        .insert(userNewsletters)
+        .values({
+          userId: user.id,
+          newsletterId,
+          isBookmarked: newValue,
+          bookmarkedAt: newValue ? new Date() : null,
+        })
+        .onConflictDoUpdate({
+          target: [userNewsletters.userId, userNewsletters.newsletterId],
+          set: {
             isBookmarked: newValue,
             bookmarkedAt: newValue ? new Date() : null,
-          })
-          .onConflictDoUpdate({
-            target: [userNewsletters.userId, userNewsletters.newsletterId],
-            set: {
-              isBookmarked: newValue,
-              bookmarkedAt: newValue ? new Date() : null,
-            },
-          }),
-      );
+          },
+        });
 
       return newValue;
     });
@@ -360,36 +350,36 @@ export class NewsletterRepository {
   static async toggleArchive(request: Request, newsletterId: string) {
     return executeWithAuth(request, async (db, user) => {
       // Check if newsletter exists and user has access (via RLS)
-      const newsletter = await db((tx) =>
-        tx.select().from(newsletters).where(eq(newsletters.id, newsletterId)).limit(1),
-      );
+      const newsletter = await db
+        .select()
+        .from(newsletters)
+        .where(eq(newsletters.id, newsletterId))
+        .limit(1);
 
       if (!newsletter[0]) return false;
 
-      const existing = await db(
-        (tx) =>
-          tx.select().from(userNewsletters).where(eq(userNewsletters.newsletterId, newsletterId)), // RLS handles user filtering
-      );
+      const existing = await db
+        .select()
+        .from(userNewsletters)
+        .where(eq(userNewsletters.newsletterId, newsletterId)); // RLS handles user filtering
 
       const newValue = !existing[0]?.isArchived;
 
-      await db((tx) =>
-        tx
-          .insert(userNewsletters)
-          .values({
-            userId: user.id,
-            newsletterId,
+      await db
+        .insert(userNewsletters)
+        .values({
+          userId: user.id,
+          newsletterId,
+          isArchived: newValue,
+          archivedAt: newValue ? new Date() : null,
+        })
+        .onConflictDoUpdate({
+          target: [userNewsletters.userId, userNewsletters.newsletterId],
+          set: {
             isArchived: newValue,
             archivedAt: newValue ? new Date() : null,
-          })
-          .onConflictDoUpdate({
-            target: [userNewsletters.userId, userNewsletters.newsletterId],
-            set: {
-              isArchived: newValue,
-              archivedAt: newValue ? new Date() : null,
-            },
-          }),
-      );
+          },
+        });
 
       return newValue;
     });
@@ -399,79 +389,69 @@ export class NewsletterRepository {
   static async getStats(request: Request, filters: FeedFilters): Promise<NewsletterStats> {
     return executeWithAuth(request, async (db) => {
       // Total newsletters for this user (RLS automatically filters)
-      const totalResult = await db(
-        (tx) =>
-          tx
-            .select({ count: sql<number>`count(*)` })
-            .from(newsletters)
-            .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
-            .where(
-              filters.searchQuery
-                ? or(
-                    ilike(newsletters.subject, `%${filters.searchQuery}%`),
-                    ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
-                  )
-                : undefined,
-            ), // RLS handles user filtering
-      );
+      const totalResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(newsletters)
+        .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
+        .where(
+          filters.searchQuery
+            ? or(
+                ilike(newsletters.subject, `%${filters.searchQuery}%`),
+                ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
+              )
+            : undefined,
+        ); // RLS handles user filtering
 
       // Unread newsletters (no interaction or isRead is false)
-      const unreadResult = await db((tx) =>
-        tx
-          .select({ count: sql<number>`count(*)` })
-          .from(newsletters)
-          .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
-          .where(
-            and(
-              or(eq(userNewsletters.isRead, false), sql`${userNewsletters.isRead} IS NULL`),
-              filters.searchQuery
-                ? or(
-                    ilike(newsletters.subject, `%${filters.searchQuery}%`),
-                    ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
-                  )
-                : undefined,
-            ),
+      const unreadResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(newsletters)
+        .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
+        .where(
+          and(
+            or(eq(userNewsletters.isRead, false), sql`${userNewsletters.isRead} IS NULL`),
+            filters.searchQuery
+              ? or(
+                  ilike(newsletters.subject, `%${filters.searchQuery}%`),
+                  ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
+                )
+              : undefined,
           ),
-      );
+        );
 
       // Bookmarked newsletters
-      const bookmarkedResult = await db(
-        (tx) =>
-          tx
-            .select({ count: sql<number>`count(*)` })
-            .from(userNewsletters)
-            .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
-            .where(
-              and(
-                eq(userNewsletters.isBookmarked, true),
-                filters.searchQuery
-                  ? or(
-                      ilike(newsletters.subject, `%${filters.searchQuery}%`),
-                      ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
-                    )
-                  : undefined,
-              ),
-            ), // RLS handles user filtering
-      );
+      const bookmarkedResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(userNewsletters)
+        .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
+        .where(
+          and(
+            eq(userNewsletters.isBookmarked, true),
+            filters.searchQuery
+              ? or(
+                  ilike(newsletters.subject, `%${filters.searchQuery}%`),
+                  ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
+                )
+              : undefined,
+          ),
+        ); // RLS handles user filtering
 
       // Archived newsletters
-      const archivedResult = await db((tx) =>
-        tx
-          .select({ count: sql<number>`count(*)` })
-          .from(userNewsletters)
-          .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
-          .where(
-            and(
-              eq(userNewsletters.isArchived, true),
-              filters.searchQuery
-                ? or(
-                    ilike(newsletters.subject, `%${filters.searchQuery}%`),
-                    ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
-                  )
-                : undefined,
-            ), // RLS handles user filtering
+      const archivedResult = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(userNewsletters)
+        .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
+        .where(
+          and(
+            eq(userNewsletters.isArchived, true),
+            filters.searchQuery
+              ? or(
+                  ilike(newsletters.subject, `%${filters.searchQuery}%`),
+                  ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
+                )
+              : undefined,
           ),
-      );
+        ); // RLS handles user filtering
 
       return {
         total: Number(totalResult[0]?.count || 0),
@@ -485,17 +465,14 @@ export class NewsletterRepository {
   // Get user's subscribed newsletter sources
   static async getUserSources(request: Request) {
     return executeWithAuth(request, async (db) => {
-      const sources = await db(
-        (tx) =>
-          tx
-            .select({
-              source: newsletterSources,
-              subscription: userNewsletterSources,
-            })
-            .from(userNewsletterSources)
-            .innerJoin(newsletterSources, eq(newsletterSources.id, userNewsletterSources.sourceId))
-            .where(eq(userNewsletterSources.isSubscribed, true)), // RLS handles user filtering
-      );
+      const sources = await db
+        .select({
+          source: newsletterSources,
+          subscription: userNewsletterSources,
+        })
+        .from(userNewsletterSources)
+        .innerJoin(newsletterSources, eq(newsletterSources.id, userNewsletterSources.sourceId))
+        .where(eq(userNewsletterSources.isSubscribed, true)); // RLS handles user filtering
 
       return sources.map((row) => ({
         ...row.source,
@@ -507,13 +484,10 @@ export class NewsletterRepository {
   // Get user's folders
   static async getUserFolders(request: Request) {
     return executeWithAuth(request, async (db) => {
-      return await db((tx) =>
-        tx
-          .select()
-          .from(userFolders)
-          // RLS handles user filtering, no WHERE clause needed
-          .orderBy(asc(userFolders.sortOrder), asc(userFolders.name)),
-      );
+      return await db
+        .select()
+        .from(userFolders)
+        .orderBy(asc(userFolders.sortOrder), asc(userFolders.name));
     });
   }
 
@@ -521,67 +495,55 @@ export class NewsletterRepository {
   static async assignToFolder(request: Request, newsletterId: string, folderId: string) {
     return executeWithAuth(request, async (db, user) => {
       // First get or create the userNewsletter entry
-      const userNewsletter = await db((tx) =>
-        tx
-          .select()
-          .from(userNewsletters)
-          .where(eq(userNewsletters.newsletterId, newsletterId)) // RLS handles user filtering
-          .limit(1),
-      );
+      const userNewsletter = await db
+        .select()
+        .from(userNewsletters)
+        .where(eq(userNewsletters.newsletterId, newsletterId)) // RLS handles user filtering
+        .limit(1);
 
       if (!userNewsletter[0]) {
         // Check if newsletter exists and user has access (via RLS)
-        const newsletter = await db((tx) =>
-          tx.select().from(newsletters).where(eq(newsletters.id, newsletterId)).limit(1),
-        );
+        const newsletter = await db
+          .select()
+          .from(newsletters)
+          .where(eq(newsletters.id, newsletterId))
+          .limit(1);
 
         if (!newsletter[0]) return;
 
-        await db((tx) =>
-          tx.insert(userNewsletters).values({
-            userId: user.id,
-            newsletterId,
-            isRead: false,
-            isBookmarked: false,
-            isArchived: false,
-          }),
-        );
+        await db.insert(userNewsletters).values({
+          userId: user.id,
+          newsletterId,
+          isRead: false,
+          isBookmarked: false,
+          isArchived: false,
+        });
       }
 
       // Get the userNewsletter ID
-      const userNewsletterRecord = await db((tx) =>
-        tx
-          .select()
-          .from(userNewsletters)
-          .where(eq(userNewsletters.newsletterId, newsletterId)) // RLS handles user filtering
-          .limit(1),
-      );
+      const userNewsletterRecord = await db
+        .select()
+        .from(userNewsletters)
+        .where(eq(userNewsletters.newsletterId, newsletterId))
+        .limit(1);
 
       if (!userNewsletterRecord[0]) return;
 
       // Assign to folder
-      await db((tx) =>
-        tx
-          .insert(newsletterFolders)
-          .values({
-            userNewsletterId: userNewsletterRecord[0].id,
-            folderId,
-          })
-          .onConflictDoNothing(),
-      );
+      await db
+        .insert(newsletterFolders)
+        .values({
+          userNewsletterId: userNewsletterRecord[0].id,
+          folderId,
+        })
+        .onConflictDoNothing();
     });
   }
 
   // Get user preferences
   static async getUserPreferences(request: Request) {
     return executeWithAuth(request, async (db) => {
-      const prefs = await db((tx) =>
-        tx
-          .select()
-          .from(userPreferences)
-          // RLS handles user filtering, no WHERE clause needed
-          .limit(1),
-      );
+      const prefs = await db.select().from(userPreferences).limit(1);
 
       return prefs[0] || null;
     });
@@ -593,18 +555,16 @@ export class NewsletterRepository {
     preferences: Partial<typeof userPreferences.$inferInsert>,
   ) {
     return executeWithAuth(request, async (db, user) => {
-      await db((tx) =>
-        tx
-          .insert(userPreferences)
-          .values({
-            userId: user.id,
-            ...preferences,
-          })
-          .onConflictDoUpdate({
-            target: userPreferences.userId,
-            set: preferences,
-          }),
-      );
+      await db
+        .insert(userPreferences)
+        .values({
+          userId: user.id,
+          ...preferences,
+        })
+        .onConflictDoUpdate({
+          target: userPreferences.userId,
+          set: preferences,
+        });
     });
   }
 }

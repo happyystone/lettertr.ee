@@ -1,1 +1,0 @@
-ALTER POLICY "waitlist_user_policy" ON "waitlist" TO authenticated USING (user_id::text = current_setting('app.current_user_id', true)::text) WITH CHECK (user_id::text = current_setting('app.current_user_id', true)::text);

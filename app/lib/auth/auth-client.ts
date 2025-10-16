@@ -1,8 +1,8 @@
 import { createAuthClient } from 'better-auth/react';
 
-import { site } from '@/config/site';
+// import { site } from '@/config/site';
 
 export const authClient = createAuthClient({
-  baseURL: site.url,
+  baseURL: 'http://localhost:5173', // site.url,
   plugins: [],
 });

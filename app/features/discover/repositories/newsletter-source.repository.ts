@@ -29,26 +29,24 @@ export class NewsletterSourceRepository {
     options: PaginationOptions,
   ): Promise<NewsletterSourceWithStatus[]> {
     return executeWithAuth(request, async (db, user) => {
-      const query = db((tx) =>
-        tx
-          .select({
-            source: newsletterSources,
-            subscription: userNewsletterSources,
-          })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-              eq(userNewsletterSources.isSubscribed, true),
-            ),
-          )
-          .where(whereConditions)
-          .orderBy(this.buildOrderBy(options.sortBy, options.sortOrder))
-          .limit(options.limit)
-          .offset((options.page - 1) * options.limit),
-      );
+      const query = db
+        .select({
+          source: newsletterSources,
+          subscription: userNewsletterSources,
+        })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+            eq(userNewsletterSources.isSubscribed, true),
+          ),
+        )
+        .where(whereConditions)
+        .orderBy(this.buildOrderBy(options.sortBy, options.sortOrder))
+        .limit(options.limit)
+        .offset((options.page - 1) * options.limit);
 
       const results = await query;
 
@@ -68,24 +66,22 @@ export class NewsletterSourceRepository {
     sourceId: string,
   ): Promise<NewsletterSourceWithStatus | null> {
     return executeWithAuth(request, async (db, user) => {
-      const result = await db((tx) =>
-        tx
-          .select({
-            source: newsletterSources,
-            subscription: userNewsletterSources,
-          })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-              eq(userNewsletterSources.isSubscribed, true),
-            ),
-          )
-          .where(eq(newsletterSources.id, sourceId))
-          .limit(1),
-      );
+      const result = await db
+        .select({
+          source: newsletterSources,
+          subscription: userNewsletterSources,
+        })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+            eq(userNewsletterSources.isSubscribed, true),
+          ),
+        )
+        .where(eq(newsletterSources.id, sourceId))
+        .limit(1);
 
       if (result.length === 0) return null;
 
@@ -103,9 +99,11 @@ export class NewsletterSourceRepository {
    */
   static async findById(request: Request, sourceId: string): Promise<NewsletterSource | null> {
     return executeWithAuth(request, async (db) => {
-      const result = await db((tx) =>
-        tx.select().from(newsletterSources).where(eq(newsletterSources.id, sourceId)).limit(1),
-      );
+      const result = await db
+        .select()
+        .from(newsletterSources)
+        .where(eq(newsletterSources.id, sourceId))
+        .limit(1);
 
       return (result[0] as NewsletterSource) || null;
     });
@@ -135,25 +133,23 @@ export class NewsletterSourceRepository {
     }
 
     return executeWithAuth(request, async (db, user) => {
-      const query = db((tx) =>
-        tx
-          .select({
-            source: newsletterSources,
-            subscription: userNewsletterSources,
-          })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-              eq(userNewsletterSources.isSubscribed, true),
-            ),
-          )
-          .where(and(...conditions))
-          .orderBy(desc(newsletterSources.isFeatured), desc(newsletterSources.subscriberCount))
-          .limit(limit),
-      );
+      const query = db
+        .select({
+          source: newsletterSources,
+          subscription: userNewsletterSources,
+        })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+            eq(userNewsletterSources.isSubscribed, true),
+          ),
+        )
+        .where(and(...conditions))
+        .orderBy(desc(newsletterSources.isFeatured), desc(newsletterSources.subscriberCount))
+        .limit(limit);
 
       const results = await query;
 
@@ -189,17 +185,16 @@ export class NewsletterSourceRepository {
       conditions.push(eq(newsletterSources.category, category));
     }
 
+    // @ts-ignore
     return executeWithAuth(request, async (db) => {
-      const results = await db((tx) =>
-        tx
-          .select()
-          .from(newsletterSources)
-          .where(and(...conditions))
-          .orderBy(desc(newsletterSources.subscriberCount), desc(newsletterSources.isVerified))
-          .limit(limit),
-      );
+      const results = await db
+        .select()
+        .from(newsletterSources)
+        .where(and(...conditions))
+        .orderBy(desc(newsletterSources.subscriberCount), desc(newsletterSources.isVerified))
+        .limit(limit);
 
-      return results as NewsletterSourceWithStatus[];
+      return results;
     });
   }
 
@@ -214,28 +209,26 @@ export class NewsletterSourceRepository {
     const searchTerm = `%${query}%`;
 
     return executeWithAuth(request, async (db) => {
-      const results = await db((tx) =>
-        tx
-          .select({
-            id: newsletterSources.id,
-            name: newsletterSources.name,
-            category: newsletterSources.category,
-            logoUrl: newsletterSources.logoUrl,
-            subscriberCount: newsletterSources.subscriberCount,
-          })
-          .from(newsletterSources)
-          .where(
-            and(
-              eq(newsletterSources.isActive, true),
-              or(
-                ilike(newsletterSources.name, searchTerm),
-                ilike(newsletterSources.email, searchTerm),
-              )!,
-            ),
-          )
-          .orderBy(desc(newsletterSources.subscriberCount))
-          .limit(limit),
-      );
+      const results = await db
+        .select({
+          id: newsletterSources.id,
+          name: newsletterSources.name,
+          category: newsletterSources.category,
+          logoUrl: newsletterSources.logoUrl,
+          subscriberCount: newsletterSources.subscriberCount,
+        })
+        .from(newsletterSources)
+        .where(
+          and(
+            eq(newsletterSources.isActive, true),
+            or(
+              ilike(newsletterSources.name, searchTerm),
+              ilike(newsletterSources.email, searchTerm),
+            )!,
+          ),
+        )
+        .orderBy(desc(newsletterSources.subscriberCount))
+        .limit(limit);
 
       return results.map((r) => ({
         id: r.id,
@@ -252,19 +245,17 @@ export class NewsletterSourceRepository {
    */
   static async count(request: Request, whereConditions: any): Promise<number> {
     return executeWithAuth(request, async (db, user) => {
-      const result = await db((tx) =>
-        tx
-          .select({ count: count() })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-            ),
-          )
-          .where(whereConditions),
-      );
+      const result = await db
+        .select({ count: count() })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+          ),
+        )
+        .where(whereConditions);
 
       return result[0]?.count || 0;
     });
@@ -275,20 +266,18 @@ export class NewsletterSourceRepository {
    */
   static async countSubscribed(request: Request, whereConditions: any): Promise<number> {
     return executeWithAuth(request, async (db, user) => {
-      const result = await db((tx) =>
-        tx
-          .select({ count: count() })
-          .from(newsletterSources)
-          .innerJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-              eq(userNewsletterSources.isSubscribed, true),
-            ),
-          )
-          .where(whereConditions),
-      );
+      const result = await db
+        .select({ count: count() })
+        .from(newsletterSources)
+        .innerJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+            eq(userNewsletterSources.isSubscribed, true),
+          ),
+        )
+        .where(whereConditions);
 
       return result[0]?.count || 0;
     });
@@ -302,12 +291,10 @@ export class NewsletterSourceRepository {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const result = await db((tx) =>
-        tx
-          .select({ count: count() })
-          .from(newsletterSources)
-          .where(and(whereConditions, gte(newsletterSources.createdAt, thirtyDaysAgo))),
-      );
+      const result = await db
+        .select({ count: count() })
+        .from(newsletterSources)
+        .where(and(whereConditions, gte(newsletterSources.createdAt, thirtyDaysAgo)));
 
       return result[0]?.count || 0;
     });
@@ -321,23 +308,21 @@ export class NewsletterSourceRepository {
     whereConditions: any,
   ): Promise<{ category: string; count: number }[]> {
     return executeWithAuth(request, async (db, user) => {
-      const results = await db((tx) =>
-        tx
-          .select({
-            category: newsletterSources.category,
-            count: count(),
-          })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-            ),
-          )
-          .where(whereConditions)
-          .groupBy(newsletterSources.category),
-      );
+      const results = await db
+        .select({
+          category: newsletterSources.category,
+          count: count(),
+        })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+          ),
+        )
+        .where(whereConditions)
+        .groupBy(newsletterSources.category);
 
       return results.map((r) => ({
         category: r.category || 'UNCATEGORIZED',
@@ -354,23 +339,21 @@ export class NewsletterSourceRepository {
     whereConditions: any,
   ): Promise<{ region: string; count: number }[]> {
     return executeWithAuth(request, async (db, user) => {
-      const results = await db((tx) =>
-        tx
-          .select({
-            region: newsletterSources.region,
-            count: count(),
-          })
-          .from(newsletterSources)
-          .leftJoin(
-            userNewsletterSources,
-            and(
-              eq(userNewsletterSources.sourceId, newsletterSources.id),
-              eq(userNewsletterSources.userId, user.id),
-            ),
-          )
-          .where(whereConditions)
-          .groupBy(newsletterSources.region),
-      );
+      const results = await db
+        .select({
+          region: newsletterSources.region,
+          count: count(),
+        })
+        .from(newsletterSources)
+        .leftJoin(
+          userNewsletterSources,
+          and(
+            eq(userNewsletterSources.sourceId, newsletterSources.id),
+            eq(userNewsletterSources.userId, user.id),
+          ),
+        )
+        .where(whereConditions)
+        .groupBy(newsletterSources.region);
 
       return results.map((r) => ({
         region: r.region,
@@ -384,19 +367,14 @@ export class NewsletterSourceRepository {
    */
   static async getUniqueCategories(request: Request): Promise<string[]> {
     return executeWithAuth(request, async (db) => {
-      const results = await db((tx) =>
-        tx
-          .selectDistinct({
-            category: newsletterSources.category,
-          })
-          .from(newsletterSources)
-          .where(
-            and(
-              eq(newsletterSources.isActive, true),
-              sql`${newsletterSources.category} IS NOT NULL`,
-            ),
-          ),
-      );
+      const results = await db
+        .selectDistinct({
+          category: newsletterSources.category,
+        })
+        .from(newsletterSources)
+        .where(
+          and(eq(newsletterSources.isActive, true), sql`${newsletterSources.category} IS NOT NULL`),
+        );
 
       return results.map((r) => r.category).filter(Boolean) as string[];
     });
@@ -407,13 +385,11 @@ export class NewsletterSourceRepository {
    */
   static async getSubscriberCount(request: Request, sourceId: string): Promise<number> {
     return executeWithAuth(request, async (db) => {
-      const result = await db((tx) =>
-        tx
-          .select({ count: newsletterSources.subscriberCount })
-          .from(newsletterSources)
-          .where(eq(newsletterSources.id, sourceId))
-          .limit(1),
-      );
+      const result = await db
+        .select({ count: newsletterSources.subscriberCount })
+        .from(newsletterSources)
+        .where(eq(newsletterSources.id, sourceId))
+        .limit(1);
 
       return result[0]?.count || 0;
     });
@@ -448,14 +424,12 @@ export class NewsletterSourceRepository {
    */
   static async getRecentNewsletters(request: Request, sourceId: string, limit: number) {
     return executeWithAuth(request, async (db) => {
-      const results = await db((tx) =>
-        tx
-          .select()
-          .from(newsletters)
-          .where(eq(newsletters.sourceId, sourceId))
-          .orderBy(desc(newsletters.receivedAt))
-          .limit(limit),
-      );
+      const results = await db
+        .select()
+        .from(newsletters)
+        .where(eq(newsletters.sourceId, sourceId))
+        .orderBy(desc(newsletters.receivedAt))
+        .limit(limit);
 
       return results;
     });
@@ -466,9 +440,10 @@ export class NewsletterSourceRepository {
    */
   static async getTotalNewsletters(request: Request, sourceId: string): Promise<number> {
     return executeWithAuth(request, async (db) => {
-      const result = await db((tx) =>
-        tx.select({ count: count() }).from(newsletters).where(eq(newsletters.sourceId, sourceId)),
-      );
+      const result = await db
+        .select({ count: count() })
+        .from(newsletters)
+        .where(eq(newsletters.sourceId, sourceId));
 
       return result[0]?.count || 0;
     });

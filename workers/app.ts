@@ -1,6 +1,11 @@
-import { createRequestHandler } from "react-router";
+import { createRequestHandler } from 'react-router';
+// import { initializeDb } from '@/db'; // 수정한 db.ts에서 initializeDb 함수를 가져옵니다.
 
-declare module "react-router" {
+export type Env = {
+  LETTERTREE_BINDING: D1Database;
+};
+
+declare module 'react-router' {
   export interface AppLoadContext {
     cloudflare: {
       env: Env;
@@ -10,12 +15,14 @@ declare module "react-router" {
 }
 
 const requestHandler = createRequestHandler(
-  () => import("virtual:react-router/server-build"),
-  import.meta.env.MODE
+  () => import('virtual:react-router/server-build'),
+  import.meta.env.MODE,
 );
 
 export default {
   async fetch(request, env, ctx) {
+    // initializeDb(env.LETTERTREE_BINDING); // DB 초기화
+
     return requestHandler(request, {
       cloudflare: { env, ctx },
     });
