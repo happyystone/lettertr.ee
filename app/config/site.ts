@@ -1,4 +1,6 @@
-const site_url = process.env.VITE_PUBLIC_APP_URL || 'http://localhost:5173';
+import { env } from 'cloudflare:workers';
+
+const site_url = env.VITE_PUBLIC_APP_URL || 'http://localhost:5173';
 
 export const site = {
   name: 'Lettertree',
