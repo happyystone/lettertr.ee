@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, data } from 'react-router';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
@@ -72,10 +72,13 @@ async function linkUserNewsletterAndUpdateSource(
   source: typeof newsletterSources.$inferSelect,
   parsedSource: ParsedEmail['letterSource'],
 ) {
-  const isExistUserNewsletterSource = await db.query.userNewsletterSources.findFirst({
-    where: (userNewsletterSources, { eq, and }) =>
+  const [isExistUserNewsletterSource] = await db
+    .select()
+    .from(userNewsletterSources)
+    .where(
       and(eq(userNewsletterSources.userId, user.id), eq(userNewsletterSources.sourceId, source.id)),
-  });
+    )
+    .limit(1);
 
   if (!isExistUserNewsletterSource) {
     await db.insert(userNewsletterSources).values({
@@ -89,9 +92,10 @@ async function linkUserNewsletterAndUpdateSource(
     userId: user.id,
     newsletterId: newsletter.id,
   });
-  const subscriberCount = await db.query.userNewsletterSources.findMany({
-    where: (userNewsletterSources, { eq }) => eq(userNewsletterSources.sourceId, source.id),
-  });
+  const subscriberCount = await db
+    .select()
+    .from(userNewsletterSources)
+    .where(eq(userNewsletterSources.sourceId, source.id));
 
   // 2번 업데이트된 newsletter source는 description, logoUrl, website, category를 더 이상 업데이트하지 않음
   if (source.updateCount >= 2) {
@@ -145,9 +149,11 @@ async function processCloudflareEmail(parsedData: z.infer<typeof cloudflareEmail
     console.log(`Processing email from ${senderEmail} to ${recipientEmail}`);
 
     // Find user by lettertree email
-    const user = await db.query.users.findFirst({
-      where: eq(users.lettertreeEmail, recipientEmail),
-    });
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.lettertreeEmail, recipientEmail))
+      .limit(1);
 
     if (!user) {
       console.error(`User not found for email: ${recipientEmail}`);
@@ -164,9 +170,11 @@ async function processCloudflareEmail(parsedData: z.infer<typeof cloudflareEmail
     );
 
     // Check if newsletter source exists, create if not
-    let source = await db.query.newsletterSources.findFirst({
-      where: eq(newsletterSources.email, senderEmail),
-    });
+    let [source] = await db
+      .select()
+      .from(newsletterSources)
+      .where(eq(newsletterSources.email, senderEmail))
+      .limit(1);
 
     if (!source) {
       // Create new newsletter source

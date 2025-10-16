@@ -1,8 +1,10 @@
 import * as cheerio from 'cheerio';
 import { GoogleGenAI, Type } from '@google/genai';
 import crypto from 'crypto';
+import { eq } from 'drizzle-orm';
 
 import { db } from '@/db';
+import { newsletters, newsletterSources } from '@/features/newsletter/schema';
 
 // Email content parser utilities
 
@@ -52,13 +54,20 @@ export async function getNewsletterInfoWithAi(
   tags: string[];
   source: ParsedEmail['letterSource'];
 } | null> {
-  const existingNewsletter = await db.query.newsletters.findFirst({
-    where: (newsletters, { eq }) => eq(newsletters.newsletterHash, newsletterHash),
-  });
+  const [existingNewsletter] = await db
+    .select()
+    .from(newsletters)
+    .where(eq(newsletters.newsletterHash, newsletterHash))
+    .limit(1);
+
   const source = existingNewsletter
-    ? await db.query.newsletterSources.findFirst({
-        where: (newsletterSources, { eq }) => eq(newsletterSources.id, existingNewsletter.sourceId),
-      })
+    ? (
+        await db
+          .select()
+          .from(newsletterSources)
+          .where(eq(newsletterSources.id, existingNewsletter.sourceId))
+          .limit(1)
+      )[0]
     : null;
 
   // 해당 source의 뉴스레터가 이미 있으면서 동시에 2번 업데이트된 newsletter source는 더 이상 AI를 통한 업데이트를 하지 않음
