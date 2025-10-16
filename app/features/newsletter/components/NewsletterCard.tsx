@@ -62,16 +62,16 @@ export function NewsletterCard({ newsletter }: { newsletter: Newsletter }) {
 
   return (
     <Card className="hover:shadow-lg hover:translate-y-[-4px] transition-all duration-200 ease-in-out flex-col justify-between pt-0">
-      <a
-        href={`/letter/${newsletter.id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="뉴스레터 방문"
-        onClick={handleMarkRead}
-      >
-        {/* FIXME: 카드 전체가 링크인게 낫지 않나?, 전체에 하면 UI 깨지긴 하는데, content, footer에 링크를 각각 달던가 */}
-        {/* <Link to={`/letter/${newsletter.id}`} onClick={handleMarkRead}> */}
-        <CardHeader className={cn('p-0', isRead && 'opacity-60')}>
+      {/* FIXME: 카드 전체가 링크인게 낫지 않나?, 전체에 하면 UI 깨지긴 하는데, content, footer에 링크를 각각 달던가 */}
+      {/* <Link to={`/letter/${newsletter.id}`} onClick={handleMarkRead}> */}
+      <CardHeader className={cn('p-0', isRead && 'opacity-60')}>
+        <a
+          href={`/letter/${newsletter.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="뉴스레터 방문"
+          onClick={handleMarkRead}
+        >
           {shouldShowImage ? (
             <img
               src={newsletter.thumbnailUrl || ''}
@@ -88,16 +88,16 @@ export function NewsletterCard({ newsletter }: { newsletter: Newsletter }) {
           <div className="flex items-start justify-between px-6 pt-6">
             <div className="flex-1">
               {/* <Link to={`/letter/${newsletter.id}`} onClick={handleMarkRead}> */}
-              <h3 className="font-semibold text-lg line-clamp-2">{newsletter.subject}</h3>
+              <h3 className="font-semibold text-lg line-clamp-2 break-all">{newsletter.subject}</h3>
               {/* </Link> */}
               <p className="text-sm text-muted-foreground mt-1">
                 {newsletter.source?.name || 'Unknown'} • {formatDate(newsletter.receivedAt)}
               </p>
             </div>
           </div>
-        </CardHeader>
-        {/* </Link> */}
-      </a>
+          {/* </Link> */}
+        </a>
+      </CardHeader>
 
       {(newsletter.tags.length > 0 || newsletter.excerpt) && (
         <CardContent className={cn(isRead && 'opacity-50')}>
@@ -117,7 +117,7 @@ export function NewsletterCard({ newsletter }: { newsletter: Newsletter }) {
       )}
 
       <CardFooter className={cn('flex items-center justify-between', isRead && 'opacity-50')}>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground min-w-fit">
           약 {newsletter.readTimeMinutes || 5}분 읽기
         </span>
 

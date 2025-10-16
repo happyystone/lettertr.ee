@@ -25,6 +25,7 @@
   // ],
   "d1_databases": [
     {
+      "remote": true,
       "migrations_dir": "drizzle",
       "binding": "LETTERTREE_BINDING",
       "database_name": "lettertree",
