@@ -1,8 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 
-import { site } from '@/config/site';
-
 export const authClient = createAuthClient({
-  baseURL: site.url,
+  baseURL: import.meta.env.VITE_PUBLIC_APP_URL,
   plugins: [],
 });
