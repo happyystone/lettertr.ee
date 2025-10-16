@@ -6,7 +6,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "lettertree",
   "compatibility_flags": [
-	"nodejs_compat"
+	  "nodejs_compat"
   ],
   "compatibility_date": "2025-04-04",
   "main": "./workers/app.ts",
@@ -16,12 +16,12 @@
   "observability": {
     "enabled": true
   },
-  "routes": [
-    {
-      "pattern": "lettertr.ee",
-      "custom_domain": true
-    },
-  ],
+  // "routes": [
+  //   {
+  //     "pattern": "lettertr.ee",
+  //     "custom_domain": true
+  //   },
+  // ],
   "d1_databases": [
     {
       "migrations_dir": "drizzle",
