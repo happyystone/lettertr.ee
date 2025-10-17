@@ -161,7 +161,10 @@ async function processCloudflareEmail(parsedData: z.infer<typeof cloudflareEmail
     }
 
     // Parse email content
-    const sanitizedHtml = sanitizeHtml(parsedData.bodyHtml || '');
+    const sanitizedHtml = sanitizeHtml(parsedData.bodyHtml || '', {
+      allowedAttributes: false,
+      allowedTags: false,
+    });
     const parsedEmail = await parseEmail(
       sanitizedHtml,
       parsedData.bodyText,
