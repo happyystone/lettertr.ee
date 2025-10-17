@@ -109,7 +109,7 @@ export const HeroSection = ({ user }: { user: AuthUser | null }) => {
 
         <div className="group relative mt-14">
           <div className="lg:-top-8 -translate-x-1/2 absolute top-2 left-1/2 mx-auto h-24 w-[90%] transform rounded-full bg-primary/50 blur-3xl lg:h-80" />
-          <div className="relative mx-auto w-full max-w-5xl">
+          {/* <div className="relative mx-auto w-full max-w-5xl">
             <div className="flex h-10 items-center rounded-t-lg bg-sidebar px-4">
               <div className="flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500" />
@@ -123,7 +123,7 @@ export const HeroSection = ({ user }: { user: AuthUser | null }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
           <img
             width={1200}
             height={1200}
