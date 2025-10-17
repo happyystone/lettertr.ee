@@ -74,3 +74,20 @@ export default function NewsletterDetailPage({ loaderData, actionData }: Route.C
     </div>
   );
 }
+
+export function ErrorBoundary() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">오류가 발생했습니다</h1>
+        <p className="text-muted-foreground mb-4">뉴스레터를 불러오는 중 문제가 발생했습니다.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-primary hover:underline cursor-pointer"
+        >
+          새로고침 하기
+        </button>
+      </div>
+    </div>
+  );
+}

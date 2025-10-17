@@ -151,7 +151,7 @@ export class NewsletterRepository {
 
   // Get single newsletter with details
   static async getNewsletter(request: Request, newsletterId: string) {
-    return executeWithAuth(request, async (db) => {
+    return executeWithAuth(request, async (db, user) => {
       const result = await db
         .select({
           newsletter: newsletters,
@@ -159,17 +159,19 @@ export class NewsletterRepository {
         })
         .from(newsletters)
         .leftJoin(newsletterSources, eq(newsletters.sourceId, newsletterSources.id))
-        .where(eq(newsletters.id, newsletterId)) // RLS handles user filtering
+        .innerJoin(userNewsletters, eq(newsletters.id, userNewsletters.newsletterId))
+        .where(and(eq(newsletters.id, newsletterId), eq(userNewsletters.userId, user.id)))
         .limit(1);
 
       if (!result[0]) return null;
 
       // Get user interaction
-      // Note: RLS automatically filters to current user's interactions
       const interaction = await db
         .select()
         .from(userNewsletters)
-        .where(eq(userNewsletters.newsletterId, newsletterId))
+        .where(
+          and(eq(userNewsletters.newsletterId, newsletterId), eq(userNewsletters.userId, user.id)),
+        )
         .limit(1);
 
       const row = result[0];
@@ -387,28 +389,29 @@ export class NewsletterRepository {
 
   // Get newsletter stats for user
   static async getStats(request: Request, filters: FeedFilters): Promise<NewsletterStats> {
-    return executeWithAuth(request, async (db) => {
-      // Total newsletters for this user (RLS automatically filters)
+    return executeWithAuth(request, async (db, user) => {
       const totalResult = await db
         .select({ count: sql<number>`count(*)` })
-        .from(newsletters)
-        .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
+        .from(userNewsletters)
         .where(
-          filters.searchQuery
-            ? or(
-                ilike(newsletters.subject, `%${filters.searchQuery}%`),
-                ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
-              )
-            : undefined,
-        ); // RLS handles user filtering
+          and(
+            eq(userNewsletters.userId, user.id),
+            filters.searchQuery
+              ? or(
+                  ilike(newsletters.subject, `%${filters.searchQuery}%`),
+                  ilike(newsletters.excerpt, `%${filters.searchQuery}%`),
+                )
+              : undefined,
+          ),
+        );
 
       // Unread newsletters (no interaction or isRead is false)
       const unreadResult = await db
         .select({ count: sql<number>`count(*)` })
-        .from(newsletters)
-        .innerJoin(userNewsletters, eq(userNewsletters.newsletterId, newsletters.id))
+        .from(userNewsletters)
         .where(
           and(
+            eq(userNewsletters.userId, user.id),
             or(eq(userNewsletters.isRead, false), sql`${userNewsletters.isRead} IS NULL`),
             filters.searchQuery
               ? or(
@@ -423,9 +426,9 @@ export class NewsletterRepository {
       const bookmarkedResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(userNewsletters)
-        .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
         .where(
           and(
+            eq(userNewsletters.userId, user.id),
             eq(userNewsletters.isBookmarked, true),
             filters.searchQuery
               ? or(
@@ -440,9 +443,9 @@ export class NewsletterRepository {
       const archivedResult = await db
         .select({ count: sql<number>`count(*)` })
         .from(userNewsletters)
-        .innerJoin(newsletters, eq(newsletters.id, userNewsletters.newsletterId))
         .where(
           and(
+            eq(userNewsletters.userId, user.id),
             eq(userNewsletters.isArchived, true),
             filters.searchQuery
               ? or(
@@ -451,7 +454,7 @@ export class NewsletterRepository {
                 )
               : undefined,
           ),
-        ); // RLS handles user filtering
+        );
 
       return {
         total: Number(totalResult[0]?.count || 0),

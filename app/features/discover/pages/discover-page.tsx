@@ -243,16 +243,18 @@ export default function DiscoverPage({ loaderData: data }: Route.ComponentProps)
   );
 }
 
-// 에러 바운더리
 export function ErrorBoundary() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">오류가 발생했습니다</h1>
         <p className="text-muted-foreground mb-4">뉴스레터를 불러오는 중 문제가 발생했습니다.</p>
-        <Link to="/dashboard" className="text-primary hover:underline">
-          대시보드로 돌아가기
-        </Link>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-primary hover:underline cursor-pointer"
+        >
+          새로고침 하기
+        </button>
       </div>
     </div>
   );
