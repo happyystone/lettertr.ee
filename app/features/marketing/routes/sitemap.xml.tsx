@@ -1,10 +1,8 @@
-import { site } from '@/config/site';
-
 // import { db } from '@/db';
 // import { newsletterSources } from '@/features/newsletter/schema';
 
 export async function loader() {
-  const baseUrl = site.url;
+  const baseUrl = process.env.VITE_PUBLIC_APP_URL;
 
   // Fetch all sources for dynamic URLs
   // const allSources = await db

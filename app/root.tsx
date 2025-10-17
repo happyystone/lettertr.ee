@@ -32,7 +32,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export const links: Route.LinksFunction = () => [
   { rel: 'icon', href: site.favicon, type: 'image/x-icon' },
   { rel: 'shortcut icon', href: site.favicon, type: 'image/x-icon' },
-  { rel: 'apple-touch-icon', sizes: '180x180', href: site.appleTouchIcon },
+  {
+    rel: 'apple-touch-icon',
+    sizes: '180x180',
+    href: `${process.env.VITE_PUBLIC_APP_URL}/apple-touch-icon.png`,
+  },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',

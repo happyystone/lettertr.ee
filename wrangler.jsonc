@@ -12,8 +12,7 @@
   "main": "./workers/app.ts",
   "vars": {
     "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
-    "VITE_PUBLIC_APP_URL": "https://lettertr.ee",
-    "VITE_MAIL_FROM": "support@lettertr.ee"
+    "VITE_PUBLIC_APP_URL": "https://lettertr.ee"
   },
   "observability": {
     "enabled": true

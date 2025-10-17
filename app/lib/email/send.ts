@@ -22,7 +22,7 @@ export const sendEmail = async ({
   action: string;
 }) => {
   await resend.emails.send({
-    from: `${site.name} <${site.mailFrom}>`,
+    from: `${site.name} <support@lettertr.ee>`,
     to,
     subject,
     react: EmailTemplate({
@@ -31,8 +31,8 @@ export const sendEmail = async ({
       action,
       url,
       siteName: site.name,
-      baseUrl: site.url,
-      imageUrl: `${site.url}/email_logo.png`,
+      baseUrl: process.env.VITE_PUBLIC_APP_URL,
+      imageUrl: `${process.env.VITE_PUBLIC_APP_URL}/email_logo.png`,
     }),
   });
 };

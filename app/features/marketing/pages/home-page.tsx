@@ -21,19 +21,19 @@ export const meta: Route.MetaFunction = () => [
   { name: 'description', content: site.description },
   // Open Graph
   { property: 'og:type', content: 'website' },
-  { property: 'og:url', content: site.url },
+  { property: 'og:url', content: process.env.VITE_PUBLIC_APP_URL },
   { property: 'og:title', content: `${site.name} - 뉴스레터 어그리게이터` },
   { property: 'og:description', content: site.description },
-  { property: 'og:image', content: site.ogImage },
+  { property: 'og:image', content: `${process.env.VITE_PUBLIC_APP_URL}/og-image.png` },
   { property: 'og:image:width', content: '1200' },
   { property: 'og:image:height', content: '750' },
   { property: 'og:image:alt', content: site.name },
   // Twitter
   { name: 'twitter:card', content: 'summary_large_image' },
-  { name: 'twitter:site', content: site.url },
+  { name: 'twitter:site', content: process.env.VITE_PUBLIC_APP_URL },
   { name: 'twitter:title', content: `${site.name} - 뉴스레터 어그리게이터` },
   { name: 'twitter:description', content: site.description },
-  { name: 'twitter:image', content: site.ogImage },
+  { name: 'twitter:image', content: `${process.env.VITE_PUBLIC_APP_URL}/og-image.png` },
   { name: 'twitter:image:alt', content: site.name },
 ];
 

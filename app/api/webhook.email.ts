@@ -14,7 +14,6 @@ import {
   userNewsletterSources,
 } from '@/features/newsletter/schema';
 import { parseEmail, type ParsedEmail } from '@/lib/email/parser';
-import { site } from '@/config/site';
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -133,7 +132,7 @@ async function processCloudflareEmail(parsedData: z.infer<typeof cloudflareEmail
     // to 필드가 배열이므로 첫 번째 수신자를 사용
     const recipientEmail = parsedData.to[0]?.address;
 
-    if (recipientEmail === site.mailFrom) {
+    if (recipientEmail === 'support@lettertr.ee') {
       return data({ success: true }, { status: 200 });
     }
 
